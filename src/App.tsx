@@ -1,19 +1,14 @@
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
-import { createWalletClient, custom, defineChain } from "viem"
+import abi from "../abi.json"
+import { ethers, toUtf8Bytes, toUtf8String } from "ethers";
+import { useQuery } from '@tanstack/react-query';
 
 import './App.css'
 
-const sei_mainnet = defineChain({
-  id: 1329,
-  name: 'Sei Mainnet',
-  nativeCurrency: { name: 'Sei', symbol: 'SEI', decimals: 18 },
-  rpcUrls: {
-    default: {
-      http: ['https://evm-rpc.sei-apis.com'],
-    },
-  },
-})
+const CW_PRECOMPILE = "0x0000000000000000000000000000000000001002";
+
+const COUNTER_ADDR = "sei1tfh5qe4l7ej8l47zheckg2h58hunzzcqgydpp9huk9x45tme90aq2a2lz4";
 
 declare global {
   interface Window {
@@ -24,13 +19,47 @@ declare global {
 
 function App() {
 
+  const counter = useQuery({
+    queryKey: ['counter'],
+    queryFn: async () => {
+      // Using MetaMask as the signer and provider
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      // Create a contract with the signer
+      const contract = new ethers.Contract(
+        CW_PRECOMPILE,
+        abi,
+        signer
+      );
+      const query_msg = { counter: {} }
+      const queryResponse = await contract.query(
+        COUNTER_ADDR,
+        toUtf8Bytes(JSON.stringify(query_msg))
+      );
+
+      return Number(toUtf8String(queryResponse));
+    }
+  });
   const on_sign_click = async () => {
-    const client = createWalletClient({
-      chain: sei_mainnet,
-      transport: custom(window.ethereum!)
-    })
-    const [addr] = await client.requestAddresses();
-    console.log(addr)
+    // Using MetaMask as the signer and provider
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    // Create a contract with the signer
+    const contract = new ethers.Contract(
+      CW_PRECOMPILE,
+      abi,
+      signer
+    );
+    const executeMsg = { increment: {} };
+    const executeResponse = await contract.execute(
+      COUNTER_ADDR,
+      toUtf8Bytes(JSON.stringify(executeMsg)),
+      toUtf8Bytes(JSON.stringify([])) // Used for sending funds if needed
+    );
+    console.log(executeResponse)
+    // invalidate the query
+    counter.refetch();
   }
 
   return (
@@ -48,6 +77,9 @@ function App() {
         <button onClick={on_sign_click}>
           Increment count
         </button>
+        <p>
+          {counter.data}
+        </p>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
