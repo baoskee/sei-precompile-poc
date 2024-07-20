@@ -12,7 +12,7 @@ const COUNTER_ADDR = "sei1tfh5qe4l7ej8l47zheckg2h58hunzzcqgydpp9huk9x45tme90aq2a
 
 const COSMOS_RPC = "https://sei-rpc.polkachu.com/"
 
-const EVM_RPC = "https://evm-rpc.sei-apis.com";
+const EVM_RPC = "https://docs-demo.sei-pacific.quiknode.pro/";
 
 declare global {
   interface Window {
@@ -76,6 +76,29 @@ function App() {
       toUtf8Bytes(JSON.stringify([])) // Used for sending funds if needed
     );
     console.log(executeResponse)
+
+    const evm_tx_res = await fetch(
+      EVM_RPC,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "jsonrpc": "2.0",
+          "method": "eth_getTransactionByHash",
+          "params": [executeResponse.hash]
+        })
+      }
+    )
+    const evm_tx_body = await evm_tx_res.json()
+    console.log("evm_tx_body", evm_tx_body)
+    // decode result.input as bytes
+    const input = evm_tx_body.result.input
+    console.log("input", input)
+    const decoded = contract.interface.decodeFunctionData("execute", input)
+    console.log("decoded", decoded)
+
 
     const cosmos_tx_res = await fetch(
       EVM_RPC,
