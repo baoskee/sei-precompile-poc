@@ -66,6 +66,8 @@ function App() {
       ])
     })
     console.log("populate_tx", populate_tx)
+    const gas_limit = await signer.estimateGas(populate_tx)
+    console.log("gas_limit", gas_limit)
 
     // metamask does not support eth_signTransaction 
     // const sign_tx = await signer.signTransaction(populate_tx)
@@ -75,7 +77,7 @@ function App() {
       toUtf8Bytes(JSON.stringify(executeMsg)),
       toUtf8Bytes(JSON.stringify([])) // Used for sending funds if needed
     );
-    console.log(executeResponse)
+    console.log(executeResponse);
 
     const evm_tx_res = await fetch(
       EVM_RPC,
