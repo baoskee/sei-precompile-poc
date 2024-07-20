@@ -10,6 +10,8 @@ const CW_PRECOMPILE = "0x0000000000000000000000000000000000001002";
 
 const COUNTER_ADDR = "sei1tfh5qe4l7ej8l47zheckg2h58hunzzcqgydpp9huk9x45tme90aq2a2lz4";
 
+const COSMOS_RPC = "https://sei-rpc.polkachu.com/"
+
 const EVM_RPC = "https://evm-rpc.sei-apis.com";
 
 declare global {
@@ -60,6 +62,32 @@ function App() {
       toUtf8Bytes(JSON.stringify([])) // Used for sending funds if needed
     );
     console.log(executeResponse)
+ 
+    const cosmos_tx_res = await fetch(
+      EVM_RPC,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "id": 1,
+          "jsonrpc": "2.0",
+          "method": "sei_getCosmosTx",
+          "params": [executeResponse.hash]
+        })
+      }
+    )
+    const tx_hash = (await cosmos_tx_res.json()).result
+    console.log(tx_hash)
+
+    const tx_res = await fetch(`${COSMOS_RPC}/tx?hash=${tx_hash}`)
+    const body = await tx_res.json()
+    console.log(body)
+
+    const events = body.tx_result.events;
+    console.log(events)
+
     // invalidate the query
     counter.refetch();
   }
