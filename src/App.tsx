@@ -10,6 +10,8 @@ const CW_PRECOMPILE = "0x0000000000000000000000000000000000001002";
 
 const COUNTER_ADDR = "sei1tfh5qe4l7ej8l47zheckg2h58hunzzcqgydpp9huk9x45tme90aq2a2lz4";
 
+const EVM_RPC = "https://evm-rpc.sei-apis.com";
+
 declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,6 +64,31 @@ function App() {
     counter.refetch();
   }
 
+  const { data } = useQuery({
+    queryKey: ["sei_addr"],
+    queryFn: async () => {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const hex_addr = await signer.getAddress();
+
+    const response = await fetch(EVM_RPC, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "jsonrpc": "2.0",
+        "method": "sei_getSeiAddress",
+        "params": [
+          hex_addr
+        ],
+        "id": 1
+      })
+    });
+
+    return response.json();
+  }});
+
   return (
     <>
       <div>
@@ -83,6 +110,9 @@ function App() {
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
+        {data && <p>
+          Sei address: {data.result}
+        </p>}
       </div>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
