@@ -56,13 +56,27 @@ function App() {
       signer
     );
     const executeMsg = { increment: {} };
+
+    const populate_tx = await signer.populateTransaction({
+      to: CW_PRECOMPILE,
+      data: contract.interface.encodeFunctionData("execute", [
+        COUNTER_ADDR,
+        toUtf8Bytes(JSON.stringify(executeMsg)),
+        toUtf8Bytes(JSON.stringify([]))
+      ])
+    })
+    console.log("populate_tx", populate_tx)
+
+    // metamask does not support eth_signTransaction 
+    // const sign_tx = await signer.signTransaction(populate_tx)
+
     const executeResponse = await contract.execute(
       COUNTER_ADDR,
       toUtf8Bytes(JSON.stringify(executeMsg)),
       toUtf8Bytes(JSON.stringify([])) // Used for sending funds if needed
     );
     console.log(executeResponse)
- 
+
     const cosmos_tx_res = await fetch(
       EVM_RPC,
       {
@@ -95,27 +109,28 @@ function App() {
   const { data } = useQuery({
     queryKey: ["sei_addr"],
     queryFn: async () => {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const hex_addr = await signer.getAddress();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const hex_addr = await signer.getAddress();
 
-    const response = await fetch(EVM_RPC, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "jsonrpc": "2.0",
-        "method": "sei_getSeiAddress",
-        "params": [
-          hex_addr
-        ],
-        "id": 1
-      })
-    });
+      const response = await fetch(EVM_RPC, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "jsonrpc": "2.0",
+          "method": "sei_getSeiAddress",
+          "params": [
+            hex_addr
+          ],
+          "id": 1
+        })
+      });
 
-    return response.json();
-  }});
+      return response.json();
+    }
+  });
 
   return (
     <>
