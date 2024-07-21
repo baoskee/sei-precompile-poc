@@ -157,6 +157,36 @@ function App() {
     }
   });
 
+  // MARK: Instantiate pre-compile
+
+  const on_instantiate_click = async () => {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const contract = new ethers.Contract(
+      CW_PRECOMPILE,
+      abi,
+      signer
+    );
+    const instantiate_msg = {}
+
+    const res = await contract.instantiate(
+      // code ID
+      5004,
+      // admin
+      "",  
+      // init msg
+      toUtf8Bytes(JSON.stringify(instantiate_msg)),
+      // label
+      "counter_contract",
+      // funds
+      toUtf8Bytes(JSON.stringify([]))
+    ); 
+    console.log(res)
+  }
+
+  // MARK: View code
+
   return (
     <>
       <div>
@@ -169,6 +199,9 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
+        <button onClick={on_instantiate_click}>
+          Instantiate
+        </button>
         <button onClick={on_sign_click}>
           Increment count
         </button>
