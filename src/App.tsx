@@ -3,6 +3,7 @@ import viteLogo from '/vite.svg'
 import abi from "../abi.json"
 import { ethers, toUtf8Bytes, toUtf8String } from "ethers";
 import { useQuery } from '@tanstack/react-query';
+import { EVM_RPC, cosmos_tx_hash } from './lib';
 
 import './App.css'
 
@@ -11,8 +12,6 @@ const CW_PRECOMPILE = "0x0000000000000000000000000000000000001002";
 const COUNTER_ADDR = "sei1tfh5qe4l7ej8l47zheckg2h58hunzzcqgydpp9huk9x45tme90aq2a2lz4";
 
 const COSMOS_RPC = "https://sei-rpc.polkachu.com/"
-
-const EVM_RPC = "https://docs-demo.sei-pacific.quiknode.pro/";
 
 declare global {
   interface Window {
@@ -23,6 +22,7 @@ declare global {
 
 function App() {
 
+  // MARK: - Query counter
   const counter = useQuery({
     queryKey: ['counter'],
     queryFn: async () => {
@@ -44,6 +44,9 @@ function App() {
       return Number(toUtf8String(queryResponse));
     }
   });
+
+  // MARK: - Sign and execute
+
   const on_sign_click = async () => {
     // Using MetaMask as the signer and provider
     const provider = new ethers.BrowserProvider(window.ethereum);
@@ -101,23 +104,7 @@ function App() {
     const decoded = contract.interface.decodeFunctionData("execute", input)
     console.log("decoded", decoded)
 
-
-    const cosmos_tx_res = await fetch(
-      EVM_RPC,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          "id": 1,
-          "jsonrpc": "2.0",
-          "method": "sei_getCosmosTx",
-          "params": [executeResponse.hash]
-        })
-      }
-    )
-    const tx_hash = (await cosmos_tx_res.json()).result
+    const tx_hash = await cosmos_tx_hash(executeResponse.hash)
     console.log(tx_hash)
 
     const tx_res = await fetch(`${COSMOS_RPC}/tx?hash=${tx_hash}`)
@@ -210,6 +197,9 @@ function App() {
       ]
     )
     console.log("execute_multiple", res)
+
+    const cosmos_tx = await cosmos_tx_hash(res.hash)
+    console.log("cosmos_tx", cosmos_tx)
 
     counter.refetch();
   }
