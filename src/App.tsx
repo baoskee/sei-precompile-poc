@@ -174,15 +174,44 @@ function App() {
       // code ID
       5004,
       // admin
-      "",  
+      "",
       // init msg
       toUtf8Bytes(JSON.stringify(instantiate_msg)),
       // label
       "counter_contract",
       // funds
       toUtf8Bytes(JSON.stringify([]))
-    ); 
+    );
     console.log(res)
+  }
+
+  // MARK: Excute multiple
+  const on_execute_multiple_click = async () => {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const contract = new ethers.Contract(
+      CW_PRECOMPILE,
+      abi,
+      signer
+    );
+    const res = await contract.execute_batch(
+      [
+        {
+          contractAddress: COUNTER_ADDR,
+          msg: toUtf8Bytes(JSON.stringify({ increment: {} })),
+          coins: toUtf8Bytes(JSON.stringify([]))
+        },
+        {
+          contractAddress: COUNTER_ADDR,
+          msg: toUtf8Bytes(JSON.stringify({ increment: {} })),
+          coins: toUtf8Bytes(JSON.stringify([]))
+        }
+      ]
+    )
+    console.log("execute_multiple", res)
+
+    counter.refetch();
   }
 
   // MARK: View code
@@ -199,12 +228,22 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={on_instantiate_click}>
-          Instantiate
-        </button>
-        <button onClick={on_sign_click}>
-          Increment count
-        </button>
+        <div style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: "10px"
+        }}>
+          <button onClick={on_instantiate_click}>
+            Instantiate
+          </button>
+          <button onClick={on_sign_click}>
+            Increment count
+          </button>
+          <button onClick={on_execute_multiple_click}>
+            Execute multiple
+          </button>
+        </div>
+
         <p>
           {counter.data}
         </p>
